@@ -1,0 +1,41 @@
+body {
+  background: #071426;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 20px;
+}
+
+.app {
+  max-width: 650px;
+  margin: auto;
+  padding: 25px;
+  background: #14243b;
+  border-radius: 18px;
+}
+
+h1 {
+  color: #55c7ff;
+}
+
+button {
+  background: #1689db;
+  color: white;
+  border: none;
+  padding: 12px 18px;
+  margin: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.day {
+  background: #203653;
+  padding: 10px;
+  margin: 6px;
+  border-radius: 8px;
+}
