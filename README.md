@@ -8,7 +8,7 @@
 
 ## Live Website
 
-[Open EARTHBEAT](PASTE_YOUR_NETLIFY_LINK_HERE)
+[Open EARTHBEAT](https://charming-kangaroo-da6f26.netlify.app)
 
 ## Project Features
 
