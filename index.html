@@ -1,33 +1,408 @@
 <!DOCTYPE html>
 <html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EARTHBEAT – Hear Our Planet | NASA Space Apps Challenge 2026</title>
+  <meta name="description" content="EARTHBEAT: The Earth Information Jukebox. Transforming real NASA Earth temperature and climate data into interactive sound, charts, and 3D visualization. Created by Team Stellar Mind X for NASA Space Apps Challenge 2026." />
 
-  <head>
-    <meta charset="UTF-8">
-    <title>Untitled</title>
-    <link rel="stylesheet" href="./style.css">
+  <!-- Google Fonts: Inter & Space Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
 
-  </head>
-    
-  <body>
-  <div class="app">
-  <h1>🌍 EARTHBEAT</h1>
-  <p>Hear Our Planet</p>
+  <!-- Site Stylesheet -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
 
-  <button id="load">Load NASA Data</button>
-  <button id="play" disabled>▶ Play Earth Music</button>
-  <button id="stop">■ Stop</button>
+  <!-- Starfield Canvas Animation Background -->
+  <canvas id="starfield" aria-hidden="true"></canvas>
 
-  <h3>Status</h3>
-  <p id="status">Ready to begin!</p>
+  <!-- Screen Reader Live Region for Accessibility -->
+  <div id="srAnnouncements" aria-live="polite" class="sr-only"></div>
 
-  <h3>NASA Temperature Data</h3>
-  <div id="data"></div>
+  <div class="app-container">
 
-  <h3>Sonification Details</h3>
-  <p id="details">Load the NASA data to begin.</p>
-</div>
-    <script  src="./script.js"></script>
+    <!-- Top Site Header & Navigation -->
+    <header class="site-header">
+      <div class="logo-area">
+        <span class="logo-icon" aria-hidden="true">🌍</span>
+        <div>
+          <h1 class="brand-title">EARTHBEAT</h1>
+          <p class="brand-subtitle">Hear Our Planet</p>
+        </div>
+      </div>
 
-  </body>
-  
+      <div class="header-badges">
+        <span class="badge nasa-badge">🚀 NASA Space Apps 2026</span>
+        <span class="badge">👥 Team Stellar Mind X</span>
+        <span class="badge">📍 Harohalli, Karnataka</span>
+      </div>
+    </header>
+
+    <!-- Hero / Project Introduction -->
+    <section class="hero-section">
+      <span class="hero-tag">Challenge: The Earth Information Jukebox</span>
+      <h2 class="hero-title">
+        Science You Can See.<br />
+        <span>Climate You Can Hear.</span>
+      </h2>
+      <p class="hero-desc">
+        EARTHBEAT transforms over 140 years of scientific NASA planetary observations into an interactive, multi-sensory experience. Through data-driven sonification, dynamic visualization, and accessible design, listen to Earth's climate rhythm and explore the changing heartbeat of our world.
+      </p>
+    </section>
+
+    <!-- Dataset Selector & Baseline Information Bar -->
+    <section class="dataset-selector-bar" aria-label="Dataset Selection">
+      <div class="dataset-label-group">
+        <span class="dataset-icon" aria-hidden="true">📊</span>
+        <div class="dataset-text">
+          <h3>Select NASA Dataset</h3>
+          <p>Choose between global climate anomalies or local station weather</p>
+        </div>
+      </div>
+
+      <div class="dataset-buttons">
+        <button id="btnDatasetGistemp" class="btn-dataset active" type="button" aria-pressed="true">
+          <span>🌍</span> NASA GISTEMP: Global Climate (1880–2026)
+        </button>
+        <button id="btnDatasetPower" class="btn-dataset" type="button" aria-pressed="false">
+          <span>📍</span> NASA POWER: Bengaluru Weather (2020–2025)
+        </button>
+      </div>
+
+      <div class="baseline-banner" id="baselineBanner">
+        <span aria-hidden="true">ℹ️</span>
+        <span id="baselineBannerText">
+          <strong>Reference Baseline:</strong> 1951–1980 global mean (0.00°C). Tones above 400 Hz signify warming anomalies; tones below 400 Hz signify cooler periods.
+        </span>
+      </div>
+    </section>
+
+    <!-- Main Interactive Stage (Globe + KPI Cards + Canvas Chart) -->
+    <main class="interactive-stage" id="explore">
+
+      <!-- Left Column: Earth Globe Visualization -->
+      <aside class="globe-card" aria-label="Earth Globe Visualization">
+        <div class="globe-header">
+          <h4>Earth Climate Globe</h4>
+        </div>
+
+        <div class="earth-container">
+          <div class="earth-atmosphere" id="earth-atmosphere" aria-hidden="true"></div>
+          <div class="earth-sphere" id="earth-sphere" aria-hidden="true">
+            <div class="earth-temp-overlay" id="earth-temp-overlay"></div>
+            <div class="earth-clouds" aria-hidden="true"></div>
+          </div>
+        </div>
+
+        <div class="globe-live-stats">
+          <div class="globe-year-display" id="globe-year">Loading...</div>
+          <div class="globe-value-display" id="globe-value">--</div>
+          <div class="change-badge steady" id="globe-change-badge">→ Ready</div>
+        </div>
+      </aside>
+
+      <!-- Right Column: KPI Cards & Canvas Chart -->
+      <section class="main-stage-content" aria-label="Data Visualizations">
+
+        <!-- KPI Cards Row -->
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <span class="kpi-label">Observation Date</span>
+            <span class="kpi-value" id="kpiDate">--</span>
+            <span class="kpi-sub">Timeline point</span>
+          </div>
+
+          <div class="kpi-card">
+            <span class="kpi-label">Temperature / Anomaly</span>
+            <span class="kpi-value anomaly" id="kpiValue">--</span>
+            <span class="kpi-sub">Actual NASA value</span>
+          </div>
+
+          <div class="kpi-card">
+            <span class="kpi-label">Sonification Pitch</span>
+            <span class="kpi-value pitch" id="kpiPitch">-- Hz</span>
+            <span class="kpi-sub">Audio frequency</span>
+          </div>
+
+          <div class="kpi-card">
+            <span class="kpi-label">Records Loaded</span>
+            <span class="kpi-value" id="kpiTotal">0</span>
+            <span class="kpi-sub">Monthly observations</span>
+          </div>
+        </div>
+
+        <!-- Canvas Chart Card -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title-group">
+              <h3>Global Temperature Timeline Chart</h3>
+              <p>Click or drag anywhere on the chart to explore any time period</p>
+            </div>
+
+            <!-- Era Quick Selector Buttons -->
+            <div class="era-selector-buttons" aria-label="Era Jump Controls">
+              <button class="btn-era active" data-era="all" type="button">Full 1880–2026</button>
+              <button class="btn-era" data-era="1900-1970" type="button">1900–1970</button>
+              <button class="btn-era" data-era="1970-2026" type="button">1970–2026</button>
+              <button class="btn-era" data-era="recent" type="button">2015–2026</button>
+            </div>
+          </div>
+
+          <div class="canvas-wrapper">
+            <canvas id="chartCanvas" aria-label="Interactive temperature timeline line chart"></canvas>
+          </div>
+        </div>
+
+      </section>
+    </main>
+
+    <!-- Playback & Timeline Console Card -->
+    <section class="console-card" aria-label="Sonification and Timeline Controls">
+
+      <!-- Timeline Slider -->
+      <div class="timeline-row">
+        <div class="timeline-labels">
+          <span id="sliderStart">1880-01-01</span>
+          <span class="current-timeline-date" id="currentTimelineDate">Current Point</span>
+          <span id="sliderEnd">2026-10-01</span>
+        </div>
+
+        <label for="timelineSlider" class="sr-only">Timeline Observation Scrubber</label>
+        <input 
+          type="range" 
+          id="timelineSlider" 
+          class="timeline-slider" 
+          min="0" 
+          max="0" 
+          value="0" 
+          aria-label="Timeline position slider"
+        />
+      </div>
+
+      <!-- Controls Row: Play, Stop, Step, Speed, Volume -->
+      <div class="controls-row">
+        <div class="main-controls">
+          <button id="btnPlay" class="btn-ctrl btn-play" type="button" aria-label="Start audio playback">
+            <span>▶</span> Play
+          </button>
+          <button id="btnStop" class="btn-ctrl btn-stop" type="button" aria-label="Stop audio and reset">
+            <span>■</span> Stop
+          </button>
+          <button id="btnPrev" class="btn-ctrl" type="button" aria-label="Step to previous observation">
+            <span>⏮</span> Prev
+          </button>
+          <button id="btnNext" class="btn-ctrl" type="button" aria-label="Step to next observation">
+            Next <span>⏭</span>
+          </button>
+        </div>
+
+        <div class="secondary-controls">
+          <div class="control-item">
+            <label for="speedSelect">Speed:</label>
+            <select id="speedSelect" class="control-select" aria-label="Playback speed selection">
+              <option value="0.5">0.5x (Slow)</option>
+              <option value="1.0" selected>1.0x (Normal)</option>
+              <option value="2.0">2.0x (Fast)</option>
+              <option value="4.0">4.0x (Scan)</option>
+            </select>
+          </div>
+
+          <div class="control-item">
+            <label for="volumeSlider">Volume:</label>
+            <input 
+              type="range" 
+              id="volumeSlider" 
+              class="volume-slider" 
+              min="0" 
+              max="1" 
+              step="0.05" 
+              value="0.5" 
+              aria-label="Audio volume slider"
+            />
+          </div>
+
+          <button id="btnMute" class="btn-ctrl" type="button" aria-label="Toggle mute" aria-pressed="false">
+            🔊 Mute
+          </button>
+        </div>
+      </div>
+
+      <!-- Status Bar -->
+      <div class="status-bar" aria-live="polite">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Ready to begin</span>
+      </div>
+    </section>
+
+    <!-- "What Am I Hearing?" Dynamic Narration Panel -->
+    <section class="narration-card" aria-label="Dynamic Audio Interpretation">
+      <div class="narration-header">
+        <span aria-hidden="true">💡</span>
+        <h4>What Am I Hearing? — Scientific Interpretation</h4>
+      </div>
+      <p class="narration-content" id="hearExplanation">
+        Select or play an observation along the timeline to hear how Earth's data is transformed into sound.
+      </p>
+      <p class="narration-audio-sub" id="hearAudioSub">
+        🔊 Acoustic signature: Calculating frequency...
+      </p>
+    </section>
+
+    <!-- Audio Legend & Interactive Tone Test Bench -->
+    <section class="audio-legend-section" id="legend" aria-label="Audio Legend">
+      <div class="section-title-group">
+        <h3>Audio Legend & Sound Mapping</h3>
+        <p>How real NASA climate numbers are translated into audible acoustic frequencies</p>
+      </div>
+
+      <div class="legend-grid">
+        <div class="legend-item-card">
+          <div class="legend-item-header">
+            <div class="legend-icon-badge cool">❄️</div>
+            <h4>Cool Climate Periods</h4>
+          </div>
+          <p>
+            Anomalies below the 1951–1980 baseline (e.g. -0.80°C to -0.20°C in the late 19th and early 20th century) map to deep, resonant lower frequencies (180 Hz – 350 Hz).
+          </p>
+          <span class="legend-formula-tag">Pitch: 180 Hz – 350 Hz</span>
+        </div>
+
+        <div class="legend-item-card">
+          <div class="legend-item-header">
+            <div class="legend-icon-badge base">⚖️</div>
+            <h4>Reference Baseline (0.00°C)</h4>
+          </div>
+          <p>
+            The 1951–1980 global mean reference baseline maps precisely to <strong>400 Hz</strong>. When anomaly is 0.00°C, the sound rings at this steady anchor pitch.
+          </p>
+          <span class="legend-formula-tag">Reference Pitch: 400 Hz (Baseline)</span>
+        </div>
+
+        <div class="legend-item-card">
+          <div class="legend-item-header">
+            <div class="legend-icon-badge warm">🔥</div>
+            <h4>Planetary Warming Anomalies</h4>
+          </div>
+          <p>
+            Positive anomalies climbing from +0.50°C to modern record highs (+1.55°C) produce higher, urgent tones (500 Hz – 720 Hz), giving physical acoustic weight to warming.
+          </p>
+          <span class="legend-formula-tag">Pitch: 500 Hz – 720 Hz (Urgent)</span>
+        </div>
+      </div>
+
+      <!-- Interactive Sound Test Bench -->
+      <div class="sound-test-bench" aria-label="Interactive Sound Test Bench">
+        <div class="test-bench-info">
+          <h4>Interactive Tone Test Bench</h4>
+          <p>Click below to test the three reference tones independently:</p>
+        </div>
+
+        <div class="test-buttons-group">
+          <button id="btnToneCool" class="btn-test-tone" type="button">
+            <span>❄️</span> Test Cool Tone (240 Hz / -0.80°C)
+          </button>
+          <button id="btnToneBase" class="btn-test-tone" type="button">
+            <span>⚖️</span> Test Baseline Tone (400 Hz / 0.00°C)
+          </button>
+          <button id="btnToneWarm" class="btn-test-tone" type="button">
+            <span>🔥</span> Test Warm Tone (700 Hz / +1.55°C)
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Accessibility & Keyboard Shortcuts Guide -->
+    <section class="accessibility-guide" aria-label="Keyboard Shortcuts">
+      <div class="section-title-group">
+        <h3>Accessibility & Keyboard Shortcuts</h3>
+        <p>Full keyboard operability and screen-reader compatibility built into every control</p>
+      </div>
+
+      <div class="shortcuts-grid">
+        <div class="shortcut-item">
+          <kbd>Space</kbd>
+          <span>Play / Pause audio</span>
+        </div>
+        <div class="shortcut-item">
+          <kbd>←</kbd> / <kbd>→</kbd>
+          <span>Step 1 month backward / forward</span>
+        </div>
+        <div class="shortcut-item">
+          <kbd>Shift</kbd> + <kbd>←</kbd> / <kbd>→</kbd>
+          <span>Jump 1 full year backward / forward</span>
+        </div>
+        <div class="shortcut-item">
+          <kbd>Home</kbd> / <kbd>End</kbd>
+          <span>Jump to start (1880) / latest (2026)</span>
+        </div>
+        <div class="shortcut-item">
+          <kbd>S</kbd> or <kbd>Esc</kbd>
+          <span>Stop playback and reset</span>
+        </div>
+        <div class="shortcut-item">
+          <kbd>M</kbd>
+          <span>Toggle mute audio</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- NASA Datasets, Methodology & Credits -->
+    <section class="credits-section" id="credits" aria-label="NASA Data Sources">
+      <div class="section-title-group">
+        <h3>NASA Data Sources & Scientific Credits</h3>
+        <p>All sonifications and visualizations are generated strictly from authentic NASA scientific data</p>
+      </div>
+
+      <div class="credits-grid">
+        <div class="credit-card">
+          <h4>NASA GISS GISTEMP v4</h4>
+          <p>
+            <strong>Global Land-Ocean Temperature Index:</strong> Monthly surface temperature anomalies from 1880 to 2026 relative to the 1951–1980 base period. Combines meteorological station measurements and ocean temperature buoys.
+          </p>
+          <a href="https://data.giss.nasa.gov/gistemp/" target="_blank" rel="noopener">NASA GISS Data Portal →</a>
+        </div>
+
+        <div class="credit-card">
+          <h4>NASA POWER Meteorology</h4>
+          <p>
+            <strong>Prediction of Worldwide Energy Resources:</strong> Daily station surface meteorology for Bengaluru (12.9716°N, 77.5946°E) from 2020 to 2025. Parameters include 2-meter air temperature, precipitation, and relative humidity.
+          </p>
+          <a href="https://power.larc.nasa.gov/" target="_blank" rel="noopener">NASA POWER API Portal →</a>
+        </div>
+
+        <div class="credit-card">
+          <h4>NASA Aqua Satellite (AIRS)</h4>
+          <p>
+            <strong>Atmospheric Infrared Sounder:</strong> High-resolution satellite sounder data validating tropospheric temperature trends and global comparison models from 2002 to 2026.
+          </p>
+          <a href="https://airs.jpl.nasa.gov/" target="_blank" rel="noopener">NASA JPL AIRS Portal →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Site Footer -->
+    <footer class="site-footer">
+      <p>
+        <strong>EARTHBEAT – Hear Our Planet</strong> · NASA Space Apps Challenge 2026
+      </p>
+      <p>
+        Built with passion by <span class="team-callout">Team Stellar Mind X</span> · Harohalli, Karnataka, India
+      </p>
+      <p class="text-muted" style="font-size: 0.75rem; margin-top: 8px;">
+        Designed for The Earth Information Jukebox Challenge. Built using HTML5, CSS3, Web Audio API, and NASA Open Science Data.
+      </p>
+    </footer>
+
+  </div>
+
+  <!-- JavaScript Modules in Dependency Order -->
+  <script src="data/embedded_data.js"></script>
+  <script src="js/data-loader.js"></script>
+  <script src="js/sonification.js"></script>
+  <script src="js/visualization.js"></script>
+  <script src="js/app.js"></script>
+</body>
 </html>
